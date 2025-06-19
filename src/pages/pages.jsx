@@ -1,0 +1,1 @@
+// manage the pages of the application
