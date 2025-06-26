@@ -1,5 +1,6 @@
 import React from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { FaArrowLeft } from "react-icons/fa";
 
 function LoginPage() {
   const [showPassword, setShowPassword] = React.useState(false);
@@ -103,6 +104,12 @@ function LoginPage() {
           To create an accessible library management system that connects
           readers with books effortlessly.
         </p>
+        <div
+          className="text-gray-500 text-2xl mt-8 cursor-pointer hover:text-gray-700 hover:scale-110 transition-transform duration-300"
+          onClick={() => (window.location.href = "http://localhost:5174")}
+        >
+          <FaArrowLeft />
+        </div>
       </div>
     </div>
   );
