@@ -1,6 +1,7 @@
 import React from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { FaArrowLeft } from "react-icons/fa";
+import toast from "react-hot-toast";
 
 function LoginPage() {
   const [showPassword, setShowPassword] = React.useState(false);
@@ -9,13 +10,7 @@ function LoginPage() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (username === "./admin") {
-      window.open("http://localhost:5175", "_blank");
-    } else if (username === "./lib") {
-      window.open("http://localhost:5176", "_blank");
-    } else {
-      alert("Invalid username or password");
-    }
+    toast.error("Login functionality is not implemented yet.");
   };
 
   return (
