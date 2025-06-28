@@ -1,6 +1,7 @@
 import "./App.css";
 import { Routes, Route } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
+import ForgotPassword from "./pages/ForgotPassword";
 import { Toaster } from "react-hot-toast";
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
       />
       <Routes>
         <Route path="/" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPassword />}></Route>
       </Routes>
     </div>
   );
