@@ -1,4 +1,5 @@
 import "./App.css";
+import { Routes, Route } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import { Toaster } from "react-hot-toast";
 
@@ -13,7 +14,9 @@ function App() {
           duration: 3000,
         }}
       />
-      <LoginPage />
+      <Routes>
+        <Route path="/" element={<LoginPage />} />
+      </Routes>
     </div>
   );
 }
