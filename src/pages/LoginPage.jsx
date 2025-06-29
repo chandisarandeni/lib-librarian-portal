@@ -2,6 +2,7 @@ import React from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { FaArrowLeft } from "react-icons/fa";
 import toast from "react-hot-toast";
+import { Link } from "react-router-dom";
 
 function LoginPage() {
   const [showPassword, setShowPassword] = React.useState(false);
@@ -76,10 +77,13 @@ function LoginPage() {
 
           <div className="text-sm text-center text-gray-600 mt-6 space-y-1">
             <p>
-              Forgot Password ?
-              <a href="#" className="text-blue-600 hover:underline ml-2">
+              Forgot Password?
+              <Link
+                to="/forgot-password"
+                className="text-blue-600 hover:underline ml-2"
+              >
                 click here
-              </a>
+              </Link>
             </p>
           </div>
         </div>
