@@ -5,17 +5,24 @@ const EditBookModal = ({ isOpen, onClose, book, onSubmit }) => {
     title: '',
     author: '',
     isbn: '',
-    status: ''
+    category: '',
+    status: '',
+    image: ''
   })
+  const [imageFile, setImageFile] = useState(null)
+  const [imagePreview, setImagePreview] = useState('')
 
   useEffect(() => {
     if (book) {
       setFormData({
-        title: book.title,
-        author: book.author,
-        isbn: book.isbn,
-        status: book.status
+        title: book.title || book.bookName || '',
+        author: book.author || book.authorName || '',
+        isbn: book.isbn || '',
+        category: book.category || book.genre || '',
+        status: book.status || 'Available',
+        image: book.image || book.coverImage || book.imageUrl || ''
       })
+      setImagePreview(book.image || book.coverImage || book.imageUrl || '')
     }
   }, [book])
 
@@ -27,17 +34,37 @@ const EditBookModal = ({ isOpen, onClose, book, onSubmit }) => {
     }))
   }
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setImageFile(file)
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setImagePreview(e.target.result)
+        setFormData(prev => ({
+          ...prev,
+          image: e.target.result
+        }))
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
-    onSubmit(formData)
+    const submitData = {
+      ...formData,
+      imageFile: imageFile
+    }
+    onSubmit(submitData)
     onClose()
   }
 
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0  bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md transform transition-all">
+    <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md transform transition-all max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-800">Edit Book</h2>
           <button 
@@ -51,6 +78,37 @@ const EditBookModal = ({ isOpen, onClose, book, onSubmit }) => {
         </div>
         
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Book Cover Image */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Book Cover Image</label>
+            <div className="flex items-start gap-4">
+              <div className="w-20 h-28 bg-gray-100 rounded border overflow-hidden flex-shrink-0">
+                {imagePreview ? (
+                  <img 
+                    src={imagePreview} 
+                    alt="Book cover preview" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd"/>
+                    </svg>
+                  </div>
+                )}
+              </div>
+              <div className="flex-1">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors text-sm"
+                />
+                <p className="text-xs text-gray-500 mt-1">Upload JPG, PNG or WebP image</p>
+              </div>
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Book Title</label>
             <input
@@ -85,6 +143,34 @@ const EditBookModal = ({ isOpen, onClose, book, onSubmit }) => {
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
               required
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+            <select
+              name="category"
+              value={formData.category}
+              onChange={handleInputChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+              required
+            >
+              <option value="">Select Category</option>
+              <option value="Fiction">Fiction</option>
+              <option value="Non-Fiction">Non-Fiction</option>
+              <option value="Science">Science</option>
+              <option value="Technology">Technology</option>
+              <option value="History">History</option>
+              <option value="Biography">Biography</option>
+              <option value="Mystery">Mystery</option>
+              <option value="Romance">Romance</option>
+              <option value="Fantasy">Fantasy</option>
+              <option value="Horror">Horror</option>
+              <option value="Poetry">Poetry</option>
+              <option value="Philosophy">Philosophy</option>
+              <option value="Education">Education</option>
+              <option value="Children">Children</option>
+              <option value="Other">Other</option>
+            </select>
           </div>
           
           <div>

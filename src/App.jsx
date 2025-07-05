@@ -5,25 +5,28 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import { Toaster } from "react-hot-toast";
 import Dashboard from './pages/Dashboard/Dashboard'
+import AppContextProvider from './Context/AppContext'
 
 function App() {
   return (
-    <div>
-      <Toaster
-        position="top-right"
-        reverseOrder={false}
-        toastOptions={{
-          className: "",
-          duration: 3000,
-        }}
-      />
-      <Routes>
-        <Route path="/" element={<LoginPage />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/dashboard/*" element={<Dashboard />} />
-      </Routes>
-    </div>
+    <AppContextProvider>
+      <div>
+        <Toaster
+          position="top-right"
+          reverseOrder={false}
+          toastOptions={{
+            className: "",
+            duration: 3000,
+          }}
+        />
+        <Routes>
+          <Route path="/" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/dashboard/*" element={<Dashboard />} />
+        </Routes>
+      </div>
+    </AppContextProvider>
   );
 }
 
