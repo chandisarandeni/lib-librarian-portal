@@ -171,13 +171,13 @@ const AllBooks = () => {
                   <td className="px-4 py-3 text-sm text-gray-900">{book.category || book.genre}</td>
                   <td className="px-4 py-3 text-sm">
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase ${
-                      book.status === 'Available'
+                      book.availabilityStatus === 'Available'
                         ? 'bg-green-100 text-green-800'
-                        : book.status === 'Borrowed'
+                        : book.availabilityStatus === 'Borrowed'
                         ? 'bg-yellow-100 text-yellow-800'
                         : 'bg-red-100 text-red-800'
                     }`}>
-                      {book.status || 'Available'}
+                      {book.availabilityStatus || 'Available'}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm">
