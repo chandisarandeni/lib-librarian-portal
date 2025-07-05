@@ -45,8 +45,22 @@ const AppContextProvider = ({ children }) => {
         fetchAllBooks();
     }
 }, [selectedGenre, selectedType]);
+
+    const addBooks = async (newBooks) => {
+        const url = "http://localhost:8080/api/v1/books/add";
+        return await axios.post(url, newBooks)
+            .then(response => {
+                setBooks(prevBooks => [...prevBooks, response.data]);
+                return response.data;
+            })
+            .catch(error => {
+                console.error("Error adding books:", error);
+                throw error;
+            });
+    }
+
   return (
-    <AppContext.Provider value={{books}}>
+    <AppContext.Provider value={{books, addBooks}}>
       {children}
     </AppContext.Provider>
   )
