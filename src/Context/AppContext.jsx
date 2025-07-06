@@ -46,17 +46,18 @@ const AppContextProvider = ({ children }) => {
     }
 }, [selectedGenre, selectedType]);
 
-    const addBooks = async (newBooks) => {
-        const url = "http://localhost:8080/api/v1/books/add";
-        return await axios.post(url, newBooks)
-            .then(response => {
-                setBooks(prevBooks => [...prevBooks, response.data]);
-                return response.data;
-            })
-            .catch(error => {
-                console.error("Error adding books:", error);
-                throw error;
-            });
+    const addBooks = async (newBook) => {
+        try {
+            const url = "http://localhost:8083/api/v1/books/add";
+            const response = await axios.post(url, newBook);
+            
+            setBooks(prevBooks => [...prevBooks, response.data]);
+            console.log("Book added successfully:", response.data);
+            return response.data;
+        } catch (error) {
+            console.error("Error adding book:", error);
+            throw error;
+        }
     }
 
   return (
