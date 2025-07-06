@@ -60,8 +60,24 @@ const AppContextProvider = ({ children }) => {
         }
     }
 
+    const updateBook = async (bookId, updatedBook) => {
+        try {
+            const url = `http://localhost:8080/api/v1/books/update/${bookId}`;
+            const response = await axios.put(url, updatedBook);
+
+            setBooks(prevBooks => prevBooks.map(book => 
+                (book.bookId === bookId || book.id === bookId) ? response.data : book
+            ));
+            console.log("Book updated successfully:", response.data);
+            return response.data;
+        } catch (error) {
+            console.error("Error updating book:", error);
+            throw error;
+        }
+    }
+
   return (
-    <AppContext.Provider value={{books, addBooks}}>
+    <AppContext.Provider value={{books, addBooks, updateBook}}>
       {children}
     </AppContext.Provider>
   )

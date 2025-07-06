@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
+import { AppContext } from '../Context/AppContext'
 
-const EditBookModal = ({ isOpen, onClose, book, onSubmit }) => {
+const EditBookModal = ({ isOpen, onClose, book }) => {
   const [formData, setFormData] = useState({
     title: '',
     author: '',
@@ -11,9 +12,14 @@ const EditBookModal = ({ isOpen, onClose, book, onSubmit }) => {
   })
   const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState('')
+  const {updateBook} = useContext(AppContext)
 
   useEffect(() => {
     if (book) {
+      console.log('Book object received:', book)
+      console.log('Available properties:', Object.keys(book))
+      console.log('Book ID:', book.bookId)
+      
       setFormData({
         title: book.title || book.bookName || '',
         author: book.author || book.authorName || '',
@@ -50,14 +56,36 @@ const EditBookModal = ({ isOpen, onClose, book, onSubmit }) => {
     }
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    const submitData = {
-      ...formData,
-      imageFile: imageFile
+    
+    try {
+      const bookId = book.bookId || book.id
+      console.log('Book object:', book)
+      console.log('Extracted bookId:', bookId)
+      console.log('Type of bookId:', typeof bookId)
+      
+      const updatedBookData = {
+        bookName: formData.title,  // Backend expects bookName
+        author: formData.author,
+        isbn: formData.isbn,
+        category: formData.category,
+        genre: formData.category,  // Backend might expect both category and genre
+        status: formData.status,
+        availabilityStatus: formData.status,  // Backend might expect this field
+        imageUrl: formData.image,
+        imageFile: imageFile
+      }
+      
+      console.log('Book ID:', bookId)
+      console.log('Updated book data:', updatedBookData)
+      
+      await updateBook(bookId, updatedBookData)
+      onClose()
+    } catch (error) {
+      console.error('Failed to update book:', error)
+      // You could add error handling here, like showing a toast notification
     }
-    onSubmit(submitData)
-    onClose()
   }
 
   if (!isOpen) return null
