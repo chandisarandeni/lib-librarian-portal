@@ -48,7 +48,7 @@ const AppContextProvider = ({ children }) => {
 
     const addBooks = async (newBook) => {
         try {
-            const url = "http://localhost:8083/api/v1/books/add";
+            const url = "http://localhost:8080/api/v1/books/add";
             const response = await axios.post(url, newBook);
             
             setBooks(prevBooks => [...prevBooks, response.data]);
