@@ -20,7 +20,9 @@ const AddBooks = () => {
     language: 'English',
     imageUrl: '',
     quantity: 1,
-    ratings: 0
+    ratings: 0,
+    numberOfViewers: 0,
+    numberOfReaders: 0
   })
 
   const [coverImage, setCoverImage] = useState(null)
@@ -131,24 +133,24 @@ const AddBooks = () => {
       const result = await addBooks(bookData)
       
       console.log('Book added successfully:', result)
-      alert('Book added successfully!')
-      
-      // Reset form
-      setFormData({
-        bookName: '',
-        author: '',
-        isbn: '',
-        category: '',
-        genre: '',
-        availabilityStatus: 'Available',
-        description: '',
-        dateOfPublication: '',
-        publisher: '',
-        language: 'English',
-        imageUrl: '',
-        quantity: 1,
-        ratings: 0
-      })
+      alert('Book added successfully!')        // Reset form
+        setFormData({
+          bookName: '',
+          author: '',
+          isbn: '',
+          category: '',
+          genre: '',
+          availabilityStatus: 'Available',
+          description: '',
+          dateOfPublication: '',
+          publisher: '',
+          language: 'English',
+          imageUrl: '',
+          quantity: 1,
+          ratings: 0,
+          numberOfViewers: 0,
+          numberOfReaders: 0
+        })
       
       // Clear image
       setCoverImage(null)
