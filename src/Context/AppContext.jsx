@@ -76,8 +76,20 @@ const AppContextProvider = ({ children }) => {
         }
     }
 
+    const fetchIssuedBooks = async () => {
+        try {
+            const url = "http://localhost:8080/api/v1/borrowings";
+            const response = await axios.get(url);
+            console.log("Issued books fetched:", response.data);
+            return response.data;
+        } catch (error) {
+            console.error("Error fetching issued books:", error);
+            throw error;
+        }
+    }
+
   return (
-    <AppContext.Provider value={{books, addBooks, updateBook}}>
+    <AppContext.Provider value={{books, addBooks, updateBook, fetchIssuedBooks}}>
       {children}
     </AppContext.Provider>
   )
