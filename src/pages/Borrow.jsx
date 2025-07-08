@@ -18,14 +18,13 @@ const Borrow = () => {
   // Mock data for issued books (you can replace this with actual data from your API)
   const [issuedBooks, setIssuedBooks] = useState([])
 
-  const {fetchIssuedBooks, fetchAllBooks, allBooks} = useContext(AppContext)
+  const {fetchIssuedBooks, books} = useContext(AppContext)
 
   useEffect(() => {
     const fetchData = async () => {
       // Fetch both issued books and all books data
       const [issuedBooksData] = await Promise.all([
-        fetchIssuedBooks(),
-        fetchAllBooks()
+        fetchIssuedBooks()
       ])
       setIssuedBooks(issuedBooksData)
     }
@@ -34,7 +33,15 @@ const Borrow = () => {
 
   // Helper function to get book details by bookId
   const getBookDetails = (bookId) => {
-    const book = allBooks.find(book => book.bookId === bookId)
+    // Safety check for books array
+    if (!books || books.length === 0) {
+      return {
+        bookName: 'Unknown Book',
+        author: 'Unknown Author'
+      }
+    }
+    
+    const book = books.find(book => book.bookId === bookId)
     return book ? {
       bookName: book.bookName || 'Unknown Book',
       author: book.author || 'Unknown Author'
@@ -236,7 +243,7 @@ const Borrow = () => {
               {paginatedIssuedBooks.map(book => {
                 const bookDetails = getBookDetails(book.bookId)
                 return (
-                <tr key={book.id} className="hover:bg-gray-50">
+                <tr key={book.bookId} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
                     <div className="font-medium text-gray-900 text-lg">#{book.bookId}</div>
                   </td>
