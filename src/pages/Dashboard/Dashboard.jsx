@@ -13,6 +13,7 @@ import EditBookModal from "../../components/EditBookModal";
 import { assets } from "../../assets/assests";
 import EditUserModal from "../../components/EditUserModal";
 import Borrow from "../Borrow";
+import { SiBookstack } from "react-icons/si";
 
 
 const Dashboard = () => {
@@ -80,7 +81,7 @@ const Dashboard = () => {
     { name: "Profile", path: "/dashboard/profile", icon: chaticon },
     { name: "All Users", path: "/dashboard/all-users", icon: chaticon },
     { name: "Overdue Books", path: "/dashboard/overdue-books", icon: chaticon },
-    { name: "Borrow Books", path: "/dashboard/borrow-books", icon: chaticon }
+    { name: "Borrowed Books", path: "/dashboard/borrow-books", icon: <SiBookstack /> }
   ];
 
   return (
