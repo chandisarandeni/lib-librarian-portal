@@ -14,6 +14,8 @@ import { assets } from "../../assets/assests";
 import EditUserModal from "../../components/EditUserModal";
 import Borrow from "../Borrow";
 import { SiBookstack } from "react-icons/si";
+import { ImProfile } from "react-icons/im";
+import { FaRegUser, FaRegCalendarTimes } from "react-icons/fa";
 
 
 const Dashboard = () => {
@@ -78,9 +80,9 @@ const Dashboard = () => {
   const sidebarLinks = [
     { name: "Dashboard", path: "/dashboard", icon: dashboardicon },
     { name: "All Books", path: "/dashboard/all-books", icon: overviewicon },
-    { name: "Profile", path: "/dashboard/profile", icon: chaticon },
-    { name: "All Users", path: "/dashboard/all-users", icon: chaticon },
-    { name: "Overdue Books", path: "/dashboard/overdue-books", icon: chaticon },
+    { name: "Profile", path: "/dashboard/profile", icon: <ImProfile /> },
+    { name: "All Users", path: "/dashboard/all-users", icon: <FaRegUser /> },
+    { name: "Overdue Books", path: "/dashboard/overdue-books", icon: <FaRegCalendarTimes /> },
     { name: "Borrowed Books", path: "/dashboard/borrow-books", icon: <SiBookstack /> }
   ];
 
