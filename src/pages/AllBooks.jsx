@@ -1,6 +1,7 @@
 import React, { useContext, useState } from 'react'
 import EditBookModal from '../components/EditBookModal' // Make sure this path is correct
-import { AppContext } from '../Context/AppContext'
+import { AppContext } from '../Context/AppContext.jsx'
+import { useNavigate } from 'react-router-dom'
 
 // Example random books data
 
@@ -9,6 +10,7 @@ const AllBooks = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const booksPerPage = 10
   const context = useContext(AppContext)
+  const navigate = useNavigate()
   
   // Modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -109,13 +111,24 @@ const AllBooks = () => {
       <div className={`p-6 ${isEditModalOpen ? 'pointer-events-none select-none blur-sm' : ''}`}>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3">
           <h2 className="text-xl font-bold text-gray-800">All Books</h2>
-          <input
-            type="text"
-            placeholder="Search by title, author, or category..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors w-full md:w-64"
-          />
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+            <input
+              type="text"
+              placeholder="Search by title, author, or category..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors w-full sm:w-64"
+            />
+            <button
+              onClick={() => navigate('/dashboard/add-books')}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors whitespace-nowrap flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              Add Books
+            </button>
+          </div>
         </div>
 
         {/* Results info */}
