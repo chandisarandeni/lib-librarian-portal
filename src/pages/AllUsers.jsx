@@ -1,33 +1,30 @@
-import React, { useState } from 'react'
-import EditBookModal from '../components/EditBookModal' // Adjust the path if needed
+import React, { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import ViewMember from './ViewMember'
+import EditUserModal from '../components/EditUserModal'
+import { AppContext } from '../context/AppContext'
 
-// Example random users data
-const initialUsers = Array.from({ length: 30 }).map((_, i) => ({
-  id: i + 1,
-  name: `User ${i + 1}`,
-  books: Math.floor(Math.random() * 10) + 1,
-  role: ['Student', 'Faculty', 'Staff'][i % 3],
-  status: i % 4 === 0 ? 'Inactive' : 'Active'
-}))
+// Example random members data
+
 
 const AllUsers = () => {
   const [search, setSearch] = useState('')
-  const [users] = useState(initialUsers)
   const [currentPage, setCurrentPage] = useState(1)
   const usersPerPage = 15
+  const {members, setMembers, editMember, fetchAllMembers, deleteMember} = useContext(AppContext)
 
   // Modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
-  const navigate = useNavigate()
 
-  // Filter users by name or role
-  const filteredUsers = users.filter(
+  // Ensure members is always an array before filtering
+  const safeMembers = Array.isArray(members) ? members : []
+
+  // Filter users by name, role, or email (safe for null values)
+  const filteredUsers = safeMembers.filter(
     user =>
-      user.name.toLowerCase().includes(search.toLowerCase()) ||
-      user.role.toLowerCase().includes(search.toLowerCase())
+      (user.name || '').toLowerCase().includes(search.toLowerCase()) ||
+      (user.role || '').toLowerCase().includes(search.toLowerCase()) ||
+      (user.email || '').toLowerCase().includes(search.toLowerCase())
   )
 
   // Calculate pagination
@@ -40,6 +37,7 @@ const AllUsers = () => {
   React.useEffect(() => {
     setCurrentPage(1)
   }, [search])
+
 
   const handlePageChange = (page) => {
     setCurrentPage(page)
@@ -90,6 +88,33 @@ const AllUsers = () => {
     setSelectedUser(null)
   }
 
+  const handleDeleteUser = async (user) => {
+    if (window.confirm(`Are you sure you want to delete ${user.name}?`)) {
+      try {
+        await deleteMember(user.memberId);
+        console.log('User deleted successfully:', user);
+        // The context function automatically updates the members state
+        // So no need to manually update local state
+      } catch (error) {
+        console.error('Error deleting user:', error);
+        alert('Error deleting user. Please try again.');
+      }
+    }
+  }
+
+  // Handle successful edit to refresh data
+  const handleEditSuccess = async () => {
+    try {
+      await fetchAllMembers(); // Refresh the members data
+      closeEditModal();
+    } catch (error) {
+      console.error('Error refreshing members:', error);
+      closeEditModal();
+    }
+  }
+
+  const navigate = useNavigate()
+
   return (
     <div className="relative">
       {/* Modal and blur background */}
@@ -97,11 +122,11 @@ const AllUsers = () => {
         <>
           <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"></div>
           <div className="fixed inset-0 flex items-center justify-center z-50">
-            <EditBookModal
+            <EditUserModal
               isOpen={isEditModalOpen}
               onClose={closeEditModal}
-              book={selectedUser}
-              // onSubmit={...} // Add if you want to handle submit
+              user={selectedUser}
+              onSubmit={handleEditSuccess}
             />
           </div>
         </>
@@ -110,19 +135,19 @@ const AllUsers = () => {
       <div className={`p-6 ${isEditModalOpen ? 'pointer-events-none select-none blur-sm' : ''}`}>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3">
           <h2 className="text-xl font-bold text-gray-800">All Users</h2>
-          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+          <div className="flex flex-col md:flex-row gap-3">
             <input
               type="text"
-              placeholder="Search by name or role..."
+              placeholder="Search by name or email..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors w-full sm:w-64"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors w-full md:w-64"
             />
             <button
-              onClick={() => navigate('/dashboard/add-user')}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors whitespace-nowrap flex items-center gap-2"
+              onClick={() => {navigate('/dashboard/add-user')}}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium whitespace-nowrap"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
               Add User
@@ -139,54 +164,46 @@ const AllUsers = () => {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User ID</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User Name</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Books Issued</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {currentUsers.map(user => (
-                <tr key={user.id}>
-                  <td className="px-4 py-3 text-sm text-gray-900">#{user.id.toString().padStart(4, '0')}</td>
+              {members.map(user => (
+                <tr key={user.memberId}>
+                  <td className="px-4 py-3 text-sm text-gray-900">#{user.memberId.toString().padStart(4, '0')}</td>
                   <td className="px-4 py-3 text-sm text-gray-900">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-red-500 rounded-full flex-shrink-0"></div>
                       {user.name}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{user.books}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{user.role}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900">{user.email}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900">{user.address}</td>
                   <td className="px-4 py-3 text-sm">
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase ${
-                      user.status === 'Active' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {user.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-sm flex gap-2">
-                    <button
-                      className="border border-gray-300 px-3 py-1 rounded text-xs text-gray-600 hover:bg-gray-50 transition-colors"
-                      onClick={() => openEditModal(user)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="border border-blue-400 text-blue-600 px-3 py-1 rounded text-xs hover:bg-blue-50 transition-colors"
-                      onClick={() => navigate(`/dashboard/member/${user.id}`)}
-                    >
-                      View
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        className="border border-gray-300 px-3 py-1 rounded text-xs text-gray-600 hover:bg-gray-50 transition-colors"
+                        onClick={() => openEditModal(user)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="border border-red-300 px-3 py-1 rounded text-xs text-red-600 hover:bg-red-50 transition-colors"
+                        onClick={() => handleDeleteUser(user)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
               {currentUsers.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-gray-400">No users found.</td>
+                  <td colSpan={5} className="text-center py-8 text-gray-400">No users found.</td>
                 </tr>
               )}
             </tbody>
