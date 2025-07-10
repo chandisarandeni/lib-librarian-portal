@@ -172,7 +172,7 @@ const AllUsers = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {members.map(user => (
+              {currentUsers.map(user => (
                 <tr key={user.memberId}>
                   <td className="px-4 py-3 text-sm text-gray-900">#{user.memberId.toString().padStart(4, '0')}</td>
                   <td className="px-4 py-3 text-sm text-gray-900">

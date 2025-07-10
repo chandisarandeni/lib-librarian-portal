@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import EditBookModal from '../components/EditBookModal'
 import EditUserModal from '../components/EditUserModal'
 import App from '../App'
-import { AppContext } from '../Context/AppContext'
+import { AppContext } from '../context/AppContext'
 
 const Main = () => {
   const navigate = useNavigate()
@@ -16,14 +16,13 @@ const Main = () => {
     { title: 'Active Members', value: '320', icon: '🧑‍🤝‍🧑', color: 'bg-green-100 text-green-700' }
   ]
 
-  const users = [
-    { id: 1, name: 'John Doe', books: 5, role: 'Student', status: 'Active' },
-    { id: 2, name: 'Jane Smith', books: 3, role: 'Faculty', status: 'Active' },
-    { id: 3, name: 'Mike Johnson', books: 7, role: 'Student', status: 'Inactive' },
-    { id: 4, name: 'Sarah Wilson', books: 2, role: 'Staff', status: 'Active' }
-  ]
 
-  const {books} = useContext(AppContext)
+
+  const {books = [], members = []} = useContext(AppContext)
+
+  // Ensure we have safe arrays to work with
+  const safeBooks = Array.isArray(books) ? books : []
+  const safeMembers = Array.isArray(members) ? members : []
 
   const overdueBooks = [
     { id: 1, user: 'John Doe', book: 'React Guide', dueDate: '2023-06-15', fine: '$5.00' },
@@ -129,57 +128,49 @@ const Main = () => {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
         {/* Users Table */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="flex justify-between items-center p-5 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800">Users</h3>
-            <button
-              onClick={() => navigate('/dashboard/all-users')}
-              className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-200 transition-colors"
-            >
-              View All
-            </button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Books</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {users.map(user => (
-                  <tr key={user.id}>
-                    <td className="px-4 py-3 text-sm text-gray-900">#{user.id.toString().padStart(4, '0')}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{user.name}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{user.books}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{user.role}</td>
-                    <td className="px-4 py-3 text-sm">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase ${
-                        user.status === 'Active'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {user.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      <button
-                        onClick={() => openUserEditModal(user)}
-                        className="border border-gray-300 px-3 py-1 rounded text-xs text-gray-600 hover:bg-gray-50 transition-colors"
-                      >
-                        Edit
-                      </button>
-                    </td>
+            <div className="flex justify-between items-center p-5 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-800">Members List</h3>
+              <div className="flex gap-2">
+                <button onClick={() => {navigate('/dashboard/add-user')}} className="bg-[#B67242] text-white px-4 py-2 rounded-lg text-sm hover:bg-[#8E552C] transition-colors">
+                  Add New Member
+                </button>
+                <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-200 transition-colors">
+                  View All
+                </button>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User ID</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User Name</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {members.slice(0, 4).map(user => (
+                    <tr key={user.memberId}>
+                      <td className="px-4 py-3 text-sm text-gray-900">#{user.memberId.toString().padStart(4, '0')}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-red-500 rounded-full flex-shrink-0"></div>
+                          {user.name}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{user.email}</td>
+                      <td className="px-4 py-3 text-sm">
+                        <button onClick={() => openUserEditModal(user)} className="border border-gray-300 px-3 py-1 rounded text-xs text-gray-600 hover:bg-gray-50 transition-colors">
+                          Edit
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
 
         {/* Books Table */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -204,20 +195,20 @@ const Main = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {books.slice(0, 4).map(book => (
-                  <tr key={book.id}>
-                    <td className="px-4 py-3 text-sm text-gray-900">#{book.bookId.toString().padStart(4, '0')}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{book.bookName}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{book.author}</td>
+                {safeBooks.slice(0, 4).map(book => (
+                  <tr key={book.bookId || book.id}>
+                    <td className="px-4 py-3 text-sm text-gray-900">#{(book.bookId || book.id || 0).toString().padStart(4, '0')}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{book.bookName || book.title || 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{book.author || 'N/A'}</td>
                     <td className="px-4 py-3 text-sm">
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase ${
-                        book.availabilityStatus === 'Available'
+                        (book.availabilityStatus || 'Available') === 'Available'
                           ? 'bg-green-100 text-green-800'
-                          : book.availabilityStatus === 'Borrowed'
+                          : (book.availabilityStatus || 'Available') === 'Borrowed'
                           ? 'bg-yellow-100 text-yellow-800'
                           : 'bg-red-100 text-red-800'
                       }`}>
-                        {book.availabilityStatus}
+                        {book.availabilityStatus || 'Available'}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm">

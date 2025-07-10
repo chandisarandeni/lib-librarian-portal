@@ -9,6 +9,7 @@ const AppContextProvider = ({ children }) => {
     const [books, setBooks] = useState([]);
     const [selectedGenre, setSelectedGenre] = useState("All Genres");
     const [selectedType, setSelectedType] = useState("All Types");
+    const [members, setMembers] = useState([]);
 
     useEffect(() => {
     // Only fetch by genre if selectedType is not set and genre is set and not "All Genres"
@@ -88,10 +89,66 @@ const AppContextProvider = ({ children }) => {
         }
     }
 
+    const fetchAllMembers = async () => {
+        try {
+            const url = "http://localhost:8080/api/v1/members";
+            const response = await axios.get(url);
+            console.log("All members fetched:", response.data);
+            setMembers(response.data || []); // Ensure it's always an array
+            return response.data || [];
+        } catch (error) {
+            console.error("Error fetching all members:", error);
+            setMembers([]); // Set to empty array on error
+            return [];
+        }
+    }
+
+    const addMembers = async (newMember) => {
+        try {
+            const url = "http://localhost:8080/api/v1/members";
+            const response = await axios.post(url, newMember);
+            setMembers(prevMembers => [...prevMembers, response.data]);
+            console.log("Member added successfully:", response.data);
+            return response.data;
+        } catch (error) {
+            console.error("Error adding member:", error);
+            throw error;
+        }
+    }
+
+    const deleteMember = async (memberId) => {
+        try {
+            const url = `http://localhost:8080/api/v1/members/${memberId}`;
+            await axios.delete(url);
+            setMembers(prevMembers => prevMembers.filter(member => member.memberId !== memberId));
+            console.log("Member deleted successfully:", memberId);
+        } catch (error) {
+            console.error("Error deleting member:", error);
+            throw error;
+        }
+    }
+
+    useEffect(() => {
+        fetchAllMembers();
+    }, [])
+
+
+            const editMember  = async (memberId, updatedData) => {
+            try {
+                const url = `http://localhost:8080/api/v1/members/${memberId}`;
+                const response = await axios.put(url, updatedData);
+                console.log("Member updated successfully:", response.data);
+                return response.data;
+            } catch (error) {
+                console.error("Error updating member:", error);
+                throw error;
+            }
+        }
+
     
 
   return (
-    <AppContext.Provider value={{books, addBooks, updateBook, fetchIssuedBooks, }}>
+    <AppContext.Provider value={{books, addBooks, updateBook, fetchIssuedBooks, members, setMembers, addMembers, deleteMember, editMember, fetchAllMembers }}>
       {children}
     </AppContext.Provider>
   )
