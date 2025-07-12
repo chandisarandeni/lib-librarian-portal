@@ -1,17 +1,51 @@
-import React from "react";
+import React, { useContext } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { FaArrowLeft } from "react-icons/fa";
 import toast from "react-hot-toast";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { AppContext } from "../context/AppContext";
 
 function LoginPage() {
   const [showPassword, setShowPassword] = React.useState(false);
   const [username, setUsername] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [isLoading, setIsLoading] = React.useState(false);
+  const {login, user, logout} = useContext(AppContext);
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    toast.error("Login functionality is not implemented yet.");
+    // Basic validation
+    if (!username.trim()) {
+      toast.error("Please enter your username");
+      return;
+    }
+
+    if (!password.trim()) {
+      toast.error("Please enter your password");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      // Call the login function from context
+      const result = await login(username, password);
+      
+      if (result === true) {
+        toast.success("Login successful!");
+        // Navigate to dashboard
+        navigate('/dashboard');
+      } else {
+        toast.error("Invalid username or password");
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error("Login failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -54,6 +88,8 @@ function LoginPage() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                   placeholder="Enter your password"
                 />
@@ -69,9 +105,14 @@ function LoginPage() {
 
             <button
               type="submit"
-              className="w-full py-2 bg-amber-600 hover:bg-amber-700 transition-all text-white font-semibold rounded-lg shadow"
+              disabled={isLoading}
+              className={`w-full py-2 font-semibold rounded-lg shadow transition-all ${
+                isLoading 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-amber-600 hover:bg-amber-700 text-white'
+              }`}
             >
-              Login
+              {isLoading ? 'Logging in...' : 'Login'}
             </button>
           </form>
 

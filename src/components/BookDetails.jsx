@@ -14,9 +14,14 @@ const BookDetails = ({ isOpen, onClose, book }) => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'Active':
+      case 'Borrowed':
         return 'bg-green-100 text-green-800'
       case 'Overdue':
         return 'bg-red-100 text-red-800'
+      case 'Returned':
+        return 'bg-blue-100 text-blue-800'
+      case 'Available':
+        return 'bg-gray-100 text-gray-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
@@ -30,7 +35,7 @@ const BookDetails = ({ isOpen, onClose, book }) => {
     return diffDays
   }
 
-  const daysRemaining = getDaysRemaining(book.dueDate)
+  const daysRemaining = getDaysRemaining(book.returnDate)
 
   return (
     <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -54,12 +59,30 @@ const BookDetails = ({ isOpen, onClose, book }) => {
             {/* Book Cover */}
             <div className="md:col-span-1">
               <div className="bg-gray-100 rounded-lg p-4 text-center">
-                <div className="w-full h-48 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg flex items-center justify-center mb-4">
-                  <svg className="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 0v12h8V4H6z" clipRule="evenodd" />
-                  </svg>
+                <div className="w-full h-48 rounded-lg overflow-hidden mb-4 bg-gray-200">
+                  {book.imageUrl || book.coverImage || book.image ? (
+                    <img 
+                      src={book.imageUrl || book.coverImage || book.image} 
+                      alt={book.bookName || 'Book cover'}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        // If image fails to load, show the fallback
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div 
+                    className={`w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg flex items-center justify-center ${
+                      book.imageUrl || book.coverImage || book.image ? 'hidden' : 'flex'
+                    }`}
+                  >
+                    <svg className="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 0v12h8V4H6z" clipRule="evenodd" />
+                    </svg>
+                  </div>
                 </div>
-                <p className="text-sm text-gray-600">Book ID: #{book.id}</p>
+                <p className="text-sm text-gray-600">Book ID: #{book.bookId}</p>
               </div>
             </div>
 
@@ -79,8 +102,8 @@ const BookDetails = ({ isOpen, onClose, book }) => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-600">Status</label>
-                    <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(book.status)}`}>
-                      {book.status}
+                    <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(book.returnStatus || book.availabilityStatus)}`}>
+                      {book.returnStatus || book.availabilityStatus || 'Unknown'}
                     </span>
                   </div>
                 </div>
@@ -107,11 +130,11 @@ const BookDetails = ({ isOpen, onClose, book }) => {
                 <div className="space-y-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-600">Issue Date</label>
-                    <p className="text-gray-900">{formatDate(book.issueDate)}</p>
+                    <p className="text-gray-900">{formatDate(book.borrowingDate)}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-600">Due Date</label>
-                    <p className="text-gray-900">{formatDate(book.dueDate)}</p>
+                    <label className="block text-sm font-medium text-gray-600">Return Date</label>
+                    <p className="text-gray-900">{formatDate(book.returnDate)}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-600">Days Remaining</label>

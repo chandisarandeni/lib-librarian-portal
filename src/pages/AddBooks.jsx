@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AppContext } from '../Context/AppContext'
+import toast from 'react-hot-toast'
+import { AppContext } from '../context/AppContext'
 
 const AddBooks = () => {
   const navigate = useNavigate()
@@ -109,6 +110,9 @@ const AddBooks = () => {
     }
 
     try {
+      // Show loading toast
+      const loadingToast = toast.loading('Adding book...')
+      
       // Prepare the book data according to your API structure
       const bookData = {
         bookName: formData.bookName,
@@ -132,25 +136,29 @@ const AddBooks = () => {
       // Call the addBooks function from context
       const result = await addBooks(bookData)
       
+      // Dismiss loading toast and show success
+      toast.dismiss(loadingToast)
       console.log('Book added successfully:', result)
-      alert('Book added successfully!')        // Reset form
-        setFormData({
-          bookName: '',
-          author: '',
-          isbn: '',
-          category: '',
-          genre: '',
-          availabilityStatus: 'Available',
-          description: '',
-          dateOfPublication: '',
-          publisher: '',
-          language: 'English',
-          imageUrl: '',
-          quantity: 1,
-          ratings: 0,
-          numberOfViewers: 0,
-          numberOfReaders: 0
-        })
+      toast.success('Book added successfully!')
+      
+      // Reset form
+      setFormData({
+        bookName: '',
+        author: '',
+        isbn: '',
+        category: '',
+        genre: '',
+        availabilityStatus: 'Available',
+        description: '',
+        dateOfPublication: '',
+        publisher: '',
+        language: 'English',
+        imageUrl: '',
+        quantity: 1,
+        ratings: 0,
+        numberOfViewers: 0,
+        numberOfReaders: 0
+      })
       
       // Clear image
       setCoverImage(null)
@@ -161,7 +169,7 @@ const AddBooks = () => {
       
     } catch (error) {
       console.error('Error adding book:', error)
-      alert('Error adding book. Please try again.')
+      toast.error('Error adding book. Please try again.')
     }
   }
 

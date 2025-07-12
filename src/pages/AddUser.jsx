@@ -1,5 +1,6 @@
 import React, { useContext, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import { AppContext } from '../context/AppContext'
 
 const AddUser = () => {
@@ -103,6 +104,9 @@ const AddUser = () => {
     }
 
     try {
+      // Show loading toast
+      const loadingToast = toast.loading('Adding user...')
+      
       // Generate random password
       const generatedPassword = generateRandomPassword()
       
@@ -122,10 +126,44 @@ const AddUser = () => {
       // Call the addMembers function from context
       const result = await addMembers(memberData)
       
+      // Dismiss loading toast
+      toast.dismiss(loadingToast)
+      
       console.log('Member added successfully:', result)
       
       // Show success message with generated password
-      alert(`User added successfully!\n\nGenerated Password: ${generatedPassword}\n\nPlease save this password and share it with the user.`)
+      toast.success('User added successfully!')
+      
+      // Show password in a separate toast with copy functionality
+      toast((t) => (
+        <div className="flex flex-col gap-2">
+          <div className="font-semibold">Generated Password:</div>
+          <div className="font-mono bg-gray-100 p-2 rounded text-sm">{generatedPassword}</div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(generatedPassword)
+                toast.success('Password copied to clipboard!')
+              }}
+              className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
+            >
+              Copy
+            </button>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="text-xs bg-gray-500 text-white px-2 py-1 rounded hover:bg-gray-600"
+            >
+              Dismiss
+            </button>
+          </div>
+          <div className="text-xs text-gray-600">Please save this password and share it with the user.</div>
+        </div>
+      ), {
+        duration: Infinity, // Don't auto-dismiss
+        style: {
+          minWidth: '350px'
+        }
+      })
       
       // Reset form
       setFormData({
@@ -153,7 +191,7 @@ const AddUser = () => {
       
     } catch (error) {
       console.error('Error adding member:', error)
-      alert('Error adding user. Please try again.')
+      toast.error('Error adding user. Please try again.')
     }
   }
 

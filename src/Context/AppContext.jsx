@@ -11,6 +11,57 @@ const AppContextProvider = ({ children }) => {
     const [selectedType, setSelectedType] = useState("All Types");
     const [members, setMembers] = useState([]);
 
+    const [user, setUser] = useState(() => {
+        const savedUser = localStorage.getItem("user");
+        return savedUser ? JSON.parse(savedUser) : null;
+    })
+    const [isAuthenticated, setIsAuthenticated] = useState(() => {
+        return localStorage.getItem("isAuthenticated") === "true";
+    });
+
+    // Login function
+    const login = async (email, password) => {
+        try {
+            const response = await axios.post("http://localhost:8080/api/v1/members/auth/login", {
+                email,
+                password
+            });
+            
+            if (response.data === true) {
+                // Create user object with email
+                const userData = { email };
+                
+                // Update state
+                setUser(userData);
+                setIsAuthenticated(true);
+                
+                // Store in localStorage
+                localStorage.setItem('user', JSON.stringify(userData));
+                localStorage.setItem('isAuthenticated', 'true');
+                
+                return { success: true, message: "Login successful" };
+            } else {
+                return { success: false, message: "Invalid credentials" };
+            }
+        } catch (error) {
+            console.error("Login error:", error);
+            return { 
+                success: false, 
+                message: error.response?.data?.message || "Login failed" 
+            };
+        }
+    };
+
+    // Logout function
+    const logout = () => {
+        setUser(null);
+        setIsAuthenticated(false);
+        
+        // Clear localStorage
+        localStorage.removeItem('user');
+        localStorage.removeItem('isAuthenticated');
+    };
+
     useEffect(() => {
     // Only fetch by genre if selectedType is not set and genre is set and not "All Genres"
     if ((!selectedType || selectedType === "All Types") && selectedGenre && selectedGenre !== "All Genres") {
@@ -82,7 +133,38 @@ const AppContextProvider = ({ children }) => {
             const url = "http://localhost:8080/api/v1/borrowings";
             const response = await axios.get(url);
             console.log("Issued books fetched:", response.data);
-            return response.data;
+            
+            // Fetch member details for each borrowing
+            const borrowingsWithMemberDetails = await Promise.all(
+                response.data.map(async (borrowing) => {
+                    try {
+                        // Fetch member details using memberId
+                        const memberResponse = await axios.get(`http://localhost:8080/api/v1/members/${borrowing.memberId}`);
+                        return {
+                            ...borrowing,
+                            memberDetails: memberResponse.data,
+                            borrowerName: memberResponse.data.name,
+                            borrowerEmail: memberResponse.data.email,
+                            borrowerPhone: memberResponse.data.phoneNumber,
+                            borrowerAddress: memberResponse.data.address
+                        };
+                    } catch (memberError) {
+                        console.error(`Error fetching member details for ID ${borrowing.memberId}:`, memberError);
+                        // Return borrowing with default member info if member fetch fails
+                        return {
+                            ...borrowing,
+                            memberDetails: null,
+                            borrowerName: 'Unknown Member',
+                            borrowerEmail: 'N/A',
+                            borrowerPhone: 'N/A',
+                            borrowerAddress: 'N/A'
+                        };
+                    }
+                })
+            );
+            
+            console.log("Issued books with member details:", borrowingsWithMemberDetails);
+            return borrowingsWithMemberDetails;
         } catch (error) {
             console.error("Error fetching issued books:", error);
             throw error;
@@ -148,7 +230,7 @@ const AppContextProvider = ({ children }) => {
     
 
   return (
-    <AppContext.Provider value={{books, addBooks, updateBook, fetchIssuedBooks, members, setMembers, addMembers, deleteMember, editMember, fetchAllMembers }}>
+    <AppContext.Provider value={{books, addBooks, updateBook, fetchIssuedBooks, members, setMembers, addMembers, deleteMember, editMember, fetchAllMembers, login, logout, user,  }}>
       {children}
     </AppContext.Provider>
   )

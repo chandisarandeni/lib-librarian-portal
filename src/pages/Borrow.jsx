@@ -85,18 +85,30 @@ const Borrow = () => {
   const recentStartIndex = (recentPage - 1) * itemsPerPage
   const recentlyBorrowed = allRecentlyBorrowed.slice(recentStartIndex, recentStartIndex + itemsPerPage)
 
-  // Get all overdue books - books that are not returned and past due date
+  // Get all overdue books - filter books where return date has passed
   const allOverdueBooks = issuedBooks.filter(book => {
-    // Check if book is still borrowed (not returned)
-    const isNotReturned = book.returnStatus !== "Returned" && book.returnStatus !== "returned"
+    // Check if book has a return date
+    if (!book.returnDate) {
+      return false
+    }
     
-    // Check if due date has passed
+    // Check if return date has passed
     const today = new Date()
-    today.setHours(23, 59, 59, 999) // Set to end of today
+    today.setHours(0, 0, 0, 0)
     const dueDate = new Date(book.returnDate)
-    const isPastDue = dueDate < today
+    dueDate.setHours(0, 0, 0, 0)
     
-    return isNotReturned && isPastDue
+    const isOverdue = dueDate < today
+    
+    // Debug log to see what's happening
+    console.log(`Book ${book.bookId} Overdue Check:`, {
+      returnDate: book.returnDate,
+      today: today.toISOString().split('T')[0],
+      dueDate: dueDate.toISOString().split('T')[0],
+      isOverdue: isOverdue
+    })
+    
+    return isOverdue
   })
 
   // Pagination for overdue books
@@ -105,13 +117,23 @@ const Borrow = () => {
   const overdueBooks = allOverdueBooks.slice(overdueStartIndex, overdueStartIndex + itemsPerPage)
 
   const getStatusColor = (status) => {
-    switch (status) {
-      case 'Active':
+    if (!status) return 'bg-gray-100 text-gray-800'
+    
+    const statusLower = status.toLowerCase()
+    switch (statusLower) {
+      case 'active':
+      case 'borrowed':
+      case 'issued':
         return 'bg-green-100 text-green-800'
-      case 'Overdue':
+      case 'overdue':
         return 'bg-red-100 text-red-800'
-      default:
+      case 'returned':
+      case 'completed':
+        return 'bg-blue-100 text-blue-800'
+      case 'available':
         return 'bg-gray-100 text-gray-800'
+      default:
+        return 'bg-yellow-100 text-yellow-800'
     }
   }
 
