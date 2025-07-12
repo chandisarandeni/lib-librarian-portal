@@ -1,6 +1,10 @@
-import React from 'react'
+import React, { useContext } from 'react'
+import { AppContext } from '../context/AppContext'
+import toast from 'react-hot-toast'
 
-const BookDetails = ({ isOpen, onClose, book }) => {
+const BookDetails = ({ isOpen, onClose, book, onBookReturned }) => {
+  const { updateBorrowings, fetchIssuedBooks } = useContext(AppContext)
+  
   if (!isOpen || !book) return null
 
   const formatDate = (dateString) => {
@@ -10,6 +14,8 @@ const BookDetails = ({ isOpen, onClose, book }) => {
       day: 'numeric'
     })
   }
+
+  
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -37,6 +43,88 @@ const BookDetails = ({ isOpen, onClose, book }) => {
 
   const daysRemaining = getDaysRemaining(book.returnDate)
 
+  // Get the image URL with better fallback logic
+  const getImageUrl = () => {
+    // Check various possible image property names
+    const possibleImageProps = [
+      book.imageUrl,
+      book.coverImage, 
+      book.image,
+      book.bookImageUrl,
+      book.cover,
+      book.thumbnail,
+      book.picture
+    ];
+    
+    // Find the first non-empty image URL
+    const imageUrl = possibleImageProps.find(url => url && url.trim() !== '');
+    
+    // If we have an image URL, make sure it's a valid URL
+    if (imageUrl) {
+      // If it's a relative path, you might need to prepend your base URL
+      if (imageUrl.startsWith('/')) {
+        return `http://localhost:8080${imageUrl}`;
+      }
+      // If it doesn't start with http/https, assume it needs the full path
+      if (!imageUrl.startsWith('http')) {
+        return `http://localhost:8080/api/v1/books/image/${imageUrl}`;
+      }
+      return imageUrl;
+    }
+    
+    return null;
+  };
+
+  const imageUrl = getImageUrl();
+  console.log('Final image URL:', imageUrl, 'Book data:', book);
+
+  // Handle return book functionality
+  const handleReturnBook = async () => {
+    // Show loading toast
+    const loadingToast = toast.loading('Returning book...')
+    
+    try {
+      // Create updated borrowing object with all existing fields but change status to "Returned"
+      const updatedBorrowing = {
+        ...book,
+        returnStatus: "Returned",
+        // Keep all other fields unchanged
+        id: book.borrowingId,
+        bookId: book.bookId,
+        memberId: book.memberId,
+        borrowerName: book.borrowerName,
+        borrowerEmail: book.borrowerEmail,
+        borrowingDate: book.borrowingDate,
+        returnDate: book.returnDate
+      }
+
+      // Call updateBorrowings function with borrowing object and ID
+      await updateBorrowings(updatedBorrowing, book.borrowingId)
+
+      // Show success toast
+      toast.success(`Book ${book.bookId} returned successfully!`, {
+        id: loadingToast
+      })
+      
+      // Notify parent component to refresh data
+      if (onBookReturned) {
+        onBookReturned()
+      }
+      
+      // Close the modal after successful return
+      onClose()
+      
+      console.log(`Book ${book.bookId} returned successfully`)
+    } catch (error) {
+      console.error('Error returning book:', error)
+      
+      // Show error toast
+      toast.error('Failed to return book. Please try again.', {
+        id: loadingToast
+      })
+    }
+  }
+
   return (
     <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -60,21 +148,34 @@ const BookDetails = ({ isOpen, onClose, book }) => {
             <div className="md:col-span-1">
               <div className="bg-gray-100 rounded-lg p-4 text-center">
                 <div className="w-full h-48 rounded-lg overflow-hidden mb-4 bg-gray-200">
-                  {book.imageUrl || book.coverImage || book.image ? (
+                  {/* Debug: Log the image URLs */}
+                  {console.log('Book image debug:', {
+                    imageUrl: book.imageUrl,
+                    coverImage: book.coverImage,
+                    image: book.image,
+                    bookName: book.bookName,
+                    finalImageUrl: imageUrl
+                  })}
+                  {imageUrl ? (
                     <img 
-                      src={book.imageUrl || book.coverImage || book.image} 
+                      src={imageUrl} 
                       alt={book.bookName || 'Book cover'}
                       className="w-full h-full object-cover"
                       onError={(e) => {
+                        console.error('Image failed to load:', e.target.src);
+                        console.error('Trying alternative image sources...');
                         // If image fails to load, show the fallback
                         e.target.style.display = 'none';
                         e.target.nextSibling.style.display = 'flex';
+                      }}
+                      onLoad={(e) => {
+                        console.log('Image loaded successfully:', e.target.src);
                       }}
                     />
                   ) : null}
                   <div 
                     className={`w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg flex items-center justify-center ${
-                      book.imageUrl || book.coverImage || book.image ? 'hidden' : 'flex'
+                      imageUrl ? 'hidden' : 'flex'
                     }`}
                   >
                     <svg className="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -162,9 +263,18 @@ const BookDetails = ({ isOpen, onClose, book }) => {
             <button className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
               Renew Book
             </button>
-            <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
-              Return Book
-            </button>
+            {book.returnStatus?.toLowerCase() === 'returned' ? (
+              <span className="px-4 py-2 bg-gray-100 text-gray-500 rounded-lg">
+                Already Returned
+              </span>
+            ) : (
+              <button 
+                onClick={handleReturnBook}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                Return Book
+              </button>
+            )}
           </div>
         </div>
       </div>

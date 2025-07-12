@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react'
 import BookDetails from '../components/BookDetails'
 import IssueBook from '../components/IssueBook'
 import { AppContext } from '../context/AppContext'
+import toast from 'react-hot-toast'
 
 const Borrow = () => {
   const [search, setSearch] = useState('')
@@ -18,7 +19,7 @@ const Borrow = () => {
   // Mock data for issued books (you can replace this with actual data from your API)
   const [issuedBooks, setIssuedBooks] = useState([])
 
-  const {fetchIssuedBooks, books} = useContext(AppContext)
+  const {fetchIssuedBooks, books, updateBorrowings} = useContext(AppContext)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -85,10 +86,15 @@ const Borrow = () => {
   const recentStartIndex = (recentPage - 1) * itemsPerPage
   const recentlyBorrowed = allRecentlyBorrowed.slice(recentStartIndex, recentStartIndex + itemsPerPage)
 
-  // Get all overdue books - filter books where return date has passed
+  // Get all overdue books - filter books where return date has passed AND book is not returned
   const allOverdueBooks = issuedBooks.filter(book => {
     // Check if book has a return date
     if (!book.returnDate) {
+      return false
+    }
+    
+    // Check if book is already returned - exclude returned books from overdue list
+    if (book.returnStatus && book.returnStatus.toLowerCase() === 'returned') {
       return false
     }
     
@@ -103,9 +109,11 @@ const Borrow = () => {
     // Debug log to see what's happening
     console.log(`Book ${book.bookId} Overdue Check:`, {
       returnDate: book.returnDate,
+      returnStatus: book.returnStatus,
       today: today.toISOString().split('T')[0],
       dueDate: dueDate.toISOString().split('T')[0],
-      isOverdue: isOverdue
+      isOverdue: isOverdue,
+      isReturned: book.returnStatus?.toLowerCase() === 'returned'
     })
     
     return isOverdue
@@ -163,6 +171,60 @@ const Borrow = () => {
 
   const handleCloseIssueModal = () => {
     setIsIssueModalOpen(false)
+  }
+
+  // Handle when a book is returned from the BookDetails modal
+  const handleBookReturned = async () => {
+    try {
+      // Refresh the issued books data to reflect the change
+      const updatedIssuedBooks = await fetchIssuedBooks()
+      setIssuedBooks(updatedIssuedBooks)
+    } catch (error) {
+      console.error('Error refreshing issued books:', error)
+    }
+  }
+
+  // Handle return book functionality
+  const handleReturnBook = async (book) => {
+    // Show loading toast
+    const loadingToast = toast.loading('Returning book...')
+    
+    try {
+      // Create updated borrowing object with all existing fields but change status to "Returned"
+      const updatedBorrowing = {
+        ...book,
+        returnStatus: "Returned",
+        // Keep all other fields unchanged
+        id: book.borrowingId,
+        bookId: book.bookId,
+        memberId: book.memberId,
+        borrowerName: book.borrowerName,
+        borrowerEmail: book.borrowerEmail,
+        borrowingDate: book.borrowingDate,
+        returnDate: book.returnDate
+      }
+
+      // Call updateBorrowings function with borrowing object and ID
+      await updateBorrowings(updatedBorrowing, book.borrowingId)
+
+      // Refresh the issued books data to reflect the change
+      const updatedIssuedBooks = await fetchIssuedBooks()
+      setIssuedBooks(updatedIssuedBooks)
+      
+      // Show success toast
+      toast.success(`Book ${book.bookId} returned successfully!`, {
+        id: loadingToast
+      })
+      
+      console.log(`Book ${book.bookId} returned successfully`)
+    } catch (error) {
+      console.error('Error returning book:', error)
+      
+      // Show error toast
+      toast.error('Failed to return book. Please try again.', {
+        id: loadingToast
+      })
+    }
   }
 
   // Pagination component
@@ -293,7 +355,16 @@ const Borrow = () => {
                   </td>
                   <td className="px-6 py-4 text-sm">
                     <div className="flex gap-2">
-                      <button className="text-blue-600 hover:text-blue-800 font-medium">Return</button>
+                      {book.returnStatus?.toLowerCase() === 'returned' ? (
+                        <span className="text-gray-400 font-medium">Returned</span>
+                      ) : (
+                        <button 
+                          onClick={() => handleReturnBook(book)}
+                          className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                        >
+                          Return
+                        </button>
+                      )}
                       <button className="text-green-600 hover:text-green-800 font-medium">Renew</button>
                       <button 
                         onClick={() => handleViewDetails(book)}
@@ -415,6 +486,7 @@ const Borrow = () => {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         book={selectedBook}
+        onBookReturned={handleBookReturned}
       />
 
       {/* IssueBook Modal */}
