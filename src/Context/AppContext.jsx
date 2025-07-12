@@ -34,7 +34,7 @@ const AppContextProvider = ({ children }) => {
     // Login function
     const login = async (email, password) => {
         try {
-            const response = await axios.post("http://localhost:8080/api/v1/members/auth/login", {
+            const response = await axios.post("http://localhost:8080/api/v1/librarians/auth/login", {
                 email,
                 password
             });
@@ -323,6 +323,34 @@ const AppContextProvider = ({ children }) => {
         }
     }
 
+    const editLibrarian = async (librarianId, updatedData) => {
+        try {
+            const url = `http://localhost:8080/api/v1/librarians/${librarianId}`;
+            const response = await axios.put(url, updatedData);
+            console.log("Librarian updated successfully:", response.data);
+            return response.data;
+
+        } catch (error) {
+            console.error("Error updating librarian:", error);
+            throw error;
+        }
+    }
+
+
+    const getRelatedLibrarian = async (email) => {
+        try {
+            const response = await axios.get(`http://localhost:8080/api/v1/librarians/by-email`, {
+                params: { email }
+            });
+            console.log("Related librarian fetched:", response.data);
+            return response.data;
+        } catch (error) {
+            console.error("Error fetching related librarian:", error);
+            throw error;
+        }
+    }
+    
+
   return (
     <AppContext.Provider value={{
       books,
@@ -340,7 +368,9 @@ const AppContextProvider = ({ children }) => {
       user,
       updateBorrowings,
       fetchPopularBooks,
-      createBorrowing
+      createBorrowing,
+      getRelatedLibrarian,
+      editLibrarian,
     }}>
       {children}
     </AppContext.Provider>
