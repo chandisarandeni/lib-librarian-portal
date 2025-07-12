@@ -295,10 +295,24 @@ const AppContextProvider = ({ children }) => {
         }
     }
 
-    
+    const fetchPopularBooks = async () => {
+        try {
+            // You can implement your own logic here for popular books
+            // For now, I'll return the first 6 books as popular books
+            const url = "http://localhost:8080/api/v1/books";
+            const response = await axios.get(url);
+            console.log("Popular books fetched:", response.data);
+            
+            // Return first 6 books or implement your own popularity logic
+            return response.data.slice(0, 6);
+        } catch (error) {
+            console.error("Error fetching popular books:", error);
+            return [];
+        }
+    }
 
   return (
-    <AppContext.Provider value={{books, addBooks, updateBook, fetchIssuedBooks, members, setMembers, addMembers, deleteMember, editMember, fetchAllMembers, login, logout, user, updateBorrowings  }}>
+    <AppContext.Provider value={{books, addBooks, updateBook, fetchIssuedBooks, members, setMembers, addMembers, deleteMember, editMember, fetchAllMembers, login, logout, user, updateBorrowings, fetchPopularBooks  }}>
       {children}
     </AppContext.Provider>
   )

@@ -1,34 +1,105 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import EditBookModal from '../components/EditBookModal'
 import EditUserModal from '../components/EditUserModal'
-import App from '../App'
 import { AppContext } from '../context/AppContext'
 
 const Main = () => {
   const navigate = useNavigate()
+  const {fetchPopularBooks, books = [], fetchAllMembers, fetchIssuedBooks} = useContext(AppContext)
+  const [topChoices, setTopChoices] = useState([])
+  const [members, setMembers] = useState([])
+  const [issuedBooks, setIssuedBooks] = useState([])
 
-  // Example data (replace with real data/fetch as needed)
+  useEffect(() => {
+    if (fetchPopularBooks) {
+      fetchPopularBooks()
+        .then(data => {
+          setTopChoices(data)
+        })
+        .catch(error => {
+          console.error('Error fetching popular books:', error)
+          setTopChoices([])
+        })
+    }
+  }, [fetchPopularBooks])
+
+  useEffect(() => {
+    fetchAllMembers()
+    .then(data => {
+      setMembers(data)
+    })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    fetchIssuedBooks()
+      .then(data => {
+        setIssuedBooks(data)
+        console.log('Issued Books:', data)
+      })
+      .catch(error => {
+        console.error('Error fetching issued books:', error)
+      })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Calculate overdue books from issued books
+  const calculateOverdueBooks = () => {
+    const today = new Date();
+    
+    return issuedBooks.filter(book => {
+      // Step 1: Check if book is returned - if yes, don't show it
+      if (book.returnStatus === 'Returned' || book.returnStatus === 'returned' || book.returnStatus === 'RETURNED' || book.returnStatus === 'return') {
+        console.log(`Book ${book.bookId} is already returned with status: ${book.returnStatus}`);
+        return false;
+      }
+      
+      // Step 2: Check if book is not returned AND return day has passed
+      if (!book.returnDate) return false;
+      
+      const returnDate = new Date(book.returnDate);
+      const isOverdue = returnDate < today;
+      
+      if (isOverdue) {
+        console.log(`Book ${book.bookId} is overdue. Due: ${book.returnDate}, Status: ${book.returnStatus}`);
+      }
+      
+      return isOverdue; // Return day has passed
+      
+    }).map(book => {
+      // Calculate fine for overdue books
+      const returnDate = new Date(book.returnDate);
+      const today = new Date();
+      const daysPastDue = Math.ceil((today - returnDate) / (1000 * 60 * 60 * 24));
+      const fine = daysPastDue * 5; // $5 per day
+      
+      return {
+        ...book,
+        daysPastDue,
+        fine: `$${fine.toFixed(2)}`
+      };
+    });
+  };
+
+  // Calculate currently borrowed books (not returned)
+  const currentlyBorrowedBooks = issuedBooks.filter(book => 
+    book.returnStatus !== 'Returned' && 
+    book.returnStatus !== 'returned' && 
+    book.returnStatus !== 'RETURNED' && 
+    book.returnStatus !== 'return'
+  );
+
+  const overdueBooks = calculateOverdueBooks();
+
   const statsData = [
-    { title: 'Total Books', value: '1,240', icon: '📚', color: 'bg-blue-100 text-blue-700' },
-    { title: 'Borrowed Books', value: '740', icon: '📖', color: 'bg-yellow-100 text-yellow-700' },
-    { title: 'Overdue Books', value: '22', icon: '⏰', color: 'bg-red-100 text-red-700' },
-    { title: 'Active Members', value: '320', icon: '🧑‍🤝‍🧑', color: 'bg-green-100 text-green-700' }
+    { title: 'Total Books', value: books.length.toString(), icon: '📚', color: 'bg-blue-100 text-blue-700' },
+    { title: 'Borrowed Books', value: currentlyBorrowedBooks.length.toString(), icon: '📖', color: 'bg-yellow-100 text-yellow-700' },
+    { title: 'Overdue Books', value: overdueBooks.length.toString(), icon: '⏰', color: 'bg-red-100 text-red-700' },
+    { title: 'Active Members', value: members.length.toString(), icon: '🧑‍🤝‍🧑', color: 'bg-green-100 text-green-700' }
   ]
-
-
-
-  const {books = [], members = []} = useContext(AppContext)
 
   // Ensure we have safe arrays to work with
   const safeBooks = Array.isArray(books) ? books : []
   const safeMembers = Array.isArray(members) ? members : []
-
-  const overdueBooks = [
-    { id: 1, user: 'John Doe', book: 'React Guide', dueDate: '2023-06-15', fine: '$5.00' },
-    { id: 2, user: 'Mike Johnson', book: 'CSS Mastery', dueDate: '2023-06-10', fine: '$8.50' },
-    { id: 3, user: 'Sarah Wilson', book: 'HTML Basics', dueDate: '2023-06-12', fine: '$3.00' }
-  ]
 
   // Modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -45,7 +116,7 @@ const Main = () => {
     setIsEditModalOpen(false)
     setSelectedBook(null)
   }
-  const handleEditBookSubmit = (updatedBook) => {
+  const handleEditBookSubmit = () => {
     closeEditModal()
   }
   const openUserEditModal = (user) => {
@@ -56,7 +127,7 @@ const Main = () => {
     setIsUserEditModalOpen(false)
     setSelectedUser(null)
   }
-  const handleEditUserSubmit = (updatedUser) => {
+  const handleEditUserSubmit = () => {
     closeUserEditModal()
   }
 
@@ -249,14 +320,23 @@ const Main = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {overdueBooks.map(item => (
-                <tr key={item.id}>
-                  <td className="px-4 py-3 text-sm text-gray-900">{item.user}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{item.book}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{item.dueDate}</td>
+              {overdueBooks.slice(0, 5).map(item => (
+                <tr key={item.id || item.bookId}>
+                  <td className="px-4 py-3 text-sm text-gray-900">{item.borrowerName || 'Unknown Member'}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900">{item.bookName || 'Unknown Book'}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900">
+                    {new Date(item.returnDate).toLocaleDateString()}
+                  </td>
                   <td className="px-4 py-3 text-sm text-red-600 font-semibold">{item.fine}</td>
                 </tr>
               ))}
+              {overdueBooks.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="text-center py-8 text-gray-400">
+                    No overdue books found
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

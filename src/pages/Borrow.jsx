@@ -86,38 +86,46 @@ const Borrow = () => {
   const recentStartIndex = (recentPage - 1) * itemsPerPage
   const recentlyBorrowed = allRecentlyBorrowed.slice(recentStartIndex, recentStartIndex + itemsPerPage)
 
-  // Get all overdue books - filter books where return date has passed AND book is not returned
-  const allOverdueBooks = issuedBooks.filter(book => {
-    // Check if book has a return date
-    if (!book.returnDate) {
-      return false
-    }
+  // Calculate overdue books with fines using the same logic from Main.jsx
+  const calculateOverdueBooks = () => {
+    const today = new Date();
     
-    // Check if book is already returned - exclude returned books from overdue list
-    if (book.returnStatus && book.returnStatus.toLowerCase() === 'returned') {
-      return false
-    }
-    
-    // Check if return date has passed
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const dueDate = new Date(book.returnDate)
-    dueDate.setHours(0, 0, 0, 0)
-    
-    const isOverdue = dueDate < today
-    
-    // Debug log to see what's happening
-    console.log(`Book ${book.bookId} Overdue Check:`, {
-      returnDate: book.returnDate,
-      returnStatus: book.returnStatus,
-      today: today.toISOString().split('T')[0],
-      dueDate: dueDate.toISOString().split('T')[0],
-      isOverdue: isOverdue,
-      isReturned: book.returnStatus?.toLowerCase() === 'returned'
-    })
-    
-    return isOverdue
-  })
+    return issuedBooks.filter(book => {
+      // Step 1: Check if book is returned - if yes, don't show it
+      if (book.returnStatus === 'Returned' || book.returnStatus === 'returned' || book.returnStatus === 'RETURNED' || book.returnStatus === 'return') {
+        console.log(`Book ${book.bookId} is already returned with status: ${book.returnStatus}`);
+        return false;
+      }
+      
+      // Step 2: Check if book is not returned AND return day has passed
+      if (!book.returnDate) return false;
+      
+      const returnDate = new Date(book.returnDate);
+      const isOverdue = returnDate < today;
+      
+      if (isOverdue) {
+        console.log(`Book ${book.bookId} is overdue. Due: ${book.returnDate}, Status: ${book.returnStatus}`);
+      }
+      
+      return isOverdue; // Return day has passed
+      
+    }).map(book => {
+      // Calculate fine for overdue books
+      const returnDate = new Date(book.returnDate);
+      const today = new Date();
+      const daysPastDue = Math.ceil((today - returnDate) / (1000 * 60 * 60 * 24));
+      const fine = daysPastDue * 5; // $5 per day
+      
+      return {
+        ...book,
+        daysPastDue,
+        fine: `$${fine.toFixed(2)}`
+      };
+    });
+  };
+
+  // Get all overdue books with calculated fines
+  const allOverdueBooks = calculateOverdueBooks()
 
   // Pagination for overdue books
   const overdueTotalPages = Math.ceil(allOverdueBooks.length / itemsPerPage)
