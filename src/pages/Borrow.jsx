@@ -19,30 +19,41 @@ const Borrow = () => {
   // Mock data for issued books (you can replace this with actual data from your API)
   const [issuedBooks, setIssuedBooks] = useState([])
 
-  const {fetchIssuedBooks, books, updateBorrowings} = useContext(AppContext)
+  const {fetchIssuedBooks, books, allBooks, members, updateBorrowings} = useContext(AppContext)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
-      // Fetch both issued books and all books data
-      const [issuedBooksData] = await Promise.all([
-        fetchIssuedBooks()
-      ])
-      setIssuedBooks(issuedBooksData)
+      if (isLoading) return // Prevent multiple simultaneous calls
+      
+      setIsLoading(true)
+      try {
+        // Fetch issued books data
+        const issuedBooksData = await fetchIssuedBooks()
+        setIssuedBooks(issuedBooksData)
+      } catch (error) {
+        console.error('Error fetching data:', error)
+        toast.error('Failed to load data. Please refresh the page.')
+      } finally {
+        setIsLoading(false)
+      }
     }
     fetchData()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Only run on component mount to prevent infinite re-renders
 
   // Helper function to get book details by bookId
   const getBookDetails = (bookId) => {
-    // Safety check for books array
-    if (!books || books.length === 0) {
+    // Safety check for books array - use allBooks if available, fallback to books
+    const booksArray = allBooks || books || []
+    if (booksArray.length === 0) {
       return {
         bookName: 'Unknown Book',
         author: 'Unknown Author'
       }
     }
     
-    const book = books.find(book => book.bookId === bookId)
+    const book = booksArray.find(book => book.bookId === bookId)
     return book ? {
       bookName: book.bookName || 'Unknown Book',
       author: book.author || 'Unknown Author'
@@ -189,6 +200,19 @@ const Borrow = () => {
       setIssuedBooks(updatedIssuedBooks)
     } catch (error) {
       console.error('Error refreshing issued books:', error)
+    }
+  }
+
+  // Handle when a book is issued from the IssueBook modal
+  const handleBookIssued = async () => {
+    try {
+      // Refresh the issued books data to reflect the new issue
+      const updatedIssuedBooks = await fetchIssuedBooks()
+      setIssuedBooks(updatedIssuedBooks)
+      // Don't show success toast here - it's already shown in IssueBook component
+    } catch (error) {
+      console.error('Error refreshing issued books:', error)
+      toast.error('Book issued but failed to refresh data. Please refresh the page.')
     }
   }
 
@@ -457,6 +481,7 @@ const Borrow = () => {
                   <th className="px-4 py-3 text-left text-xs font-medium text-red-500 uppercase tracking-wider">Book</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-red-500 uppercase tracking-wider">Borrower</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-red-500 uppercase tracking-wider">Due Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-red-500 uppercase tracking-wider">Fine</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -469,13 +494,19 @@ const Borrow = () => {
                       <div className="text-xs text-gray-500">{bookDetails.author}</div>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">{book.borrowerName}</td>
-                    <td className="px-4 py-3 text-sm text-red-600 font-medium">{formatDate(book.returnDate)}</td>
+                    <td className="px-4 py-3 text-sm text-red-600 font-medium">
+                      {formatDate(book.returnDate)}
+                      <div className="text-xs text-red-500">
+                        {book.daysPastDue} day{book.daysPastDue !== 1 ? 's' : ''} overdue
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-red-600 font-semibold">{book.fine}</td>
                   </tr>
                   )
                 })}
                 {overdueBooks.length === 0 && (
                   <tr>
-                    <td colSpan={3} className="text-center py-6 text-gray-400 text-sm">No overdue books.</td>
+                    <td colSpan={4} className="text-center py-6 text-gray-400 text-sm">No overdue books.</td>
                   </tr>
                 )}
               </tbody>
@@ -501,6 +532,9 @@ const Borrow = () => {
       <IssueBook 
         isOpen={isIssueModalOpen}
         onClose={handleCloseIssueModal}
+        books={allBooks || books || []} // Pass all books (use allBooks if available, fallback to books, then empty array)
+        members={members || []} // Pass all members/users
+        onBookIssued={handleBookIssued} // Callback to refresh data after issuing
       />
     </div>
   )

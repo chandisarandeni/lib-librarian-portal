@@ -1,3 +1,15 @@
+    // Create a new borrowing (issue a book)
+    const createBorrowing = async (borrowingData) => {
+        try {
+            const url = "http://localhost:8080/api/v1/borrowings";
+            const response = await axios.post(url, borrowingData);
+            console.log("Borrowing created successfully:", response.data);
+            return response.data;
+        } catch (error) {
+            console.error("Error creating borrowing:", error);
+            throw error;
+        }
+    }
 import { createContext, useEffect, useState } from "react";
 import axios from "axios";
 
@@ -312,7 +324,24 @@ const AppContextProvider = ({ children }) => {
     }
 
   return (
-    <AppContext.Provider value={{books, addBooks, updateBook, fetchIssuedBooks, members, setMembers, addMembers, deleteMember, editMember, fetchAllMembers, login, logout, user, updateBorrowings, fetchPopularBooks  }}>
+    <AppContext.Provider value={{
+      books,
+      addBooks,
+      updateBook,
+      fetchIssuedBooks,
+      members,
+      setMembers,
+      addMembers,
+      deleteMember,
+      editMember,
+      fetchAllMembers,
+      login,
+      logout,
+      user,
+      updateBorrowings,
+      fetchPopularBooks,
+      createBorrowing
+    }}>
       {children}
     </AppContext.Provider>
   )
