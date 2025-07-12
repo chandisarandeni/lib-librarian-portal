@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 
 import OverdueBooks from "../OverdueBooks";
-import { Route, Routes, Link, NavLink } from "react-router-dom";
+import { Route, Routes, Link, NavLink, useNavigate } from "react-router-dom";
 import AddBooks from '../AddBooks'
 import AddUser from '../AddUser'
 import AllBooks from '../AllBooks'
@@ -21,6 +21,12 @@ import { AppContext } from "../../context/AppContext";
 
 const Dashboard = () => {
   const {user, logout, getRelatedMember} = useContext(AppContext)
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    logout()
+    navigate('/')
+  }
   const dashboardicon = (
     <svg
       className="w-6 h-6"
@@ -138,7 +144,7 @@ const Dashboard = () => {
           <div></div>
           <div className="flex items-center gap-5 text-black">
             <p>Hi! Admin</p>
-            <button className="border rounded-full text-sm px-4 py-1">
+            <button onClick={handleLogout} className="border rounded-full text-sm px-4 py-1">
               Logout
             </button>
           </div>

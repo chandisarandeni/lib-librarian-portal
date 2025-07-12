@@ -99,7 +99,7 @@ const Profile = () => {
 
   return (
     <>
-      <Toaster position="top-center" reverseOrder={false} />
+      
       <div className="w-full p-6">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
