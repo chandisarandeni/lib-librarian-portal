@@ -6,6 +6,7 @@ import ResetPassword from "./pages/ResetPassword";
 import { Toaster } from "react-hot-toast";
 import Dashboard from './pages/Dashboard/Dashboard'
 import AppContextProvider from './Context/AppContext'
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
@@ -23,7 +24,15 @@ function App() {
           <Route path="/" element={<LoginPage />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/dashboard/*" element={<Dashboard />} />
+          
+          <Route 
+          path="/dashboard/*" 
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } 
+        />
         </Routes>
       </div>
     </AppContextProvider>
